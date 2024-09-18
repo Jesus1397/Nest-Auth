@@ -1,9 +1,11 @@
-import { Module } from '@nestjs/common';
+import { MiddlewareConsumer, Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from './modules/auth/auth.module';
 import { ConfigModule } from '@nestjs/config';
+import { LoggerMiddleware } from './modules/auth/middleware/logger/logger.middleware';
+import { BlockUserMiddleware } from './modules/auth/middleware/block-user/block-user.middleware';
 
 @Module({
   imports: [
@@ -25,4 +27,9 @@ import { ConfigModule } from '@nestjs/config';
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule {}
+export class AppModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(LoggerMiddleware).forRoutes('*'); // Aplica el middleware a todas las rutas
+    consumer.apply(BlockUserMiddleware).forRoutes('protected/*'); // Aplica solo a rutas protegidas
+  }
+}

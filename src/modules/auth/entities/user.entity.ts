@@ -22,4 +22,10 @@ export class User {
 
   @Column({ nullable: true })
   emailVerificationToken: string;
+
+  @Column({ nullable: true })
+  twoFactorSecret: string;
+
+  @Column({ default: false })
+  isBlocked: boolean;
 }

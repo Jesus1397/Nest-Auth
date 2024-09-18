@@ -5,10 +5,18 @@ import {
   BadRequestException,
   Body,
   Post,
+  Patch,
+  Request,
+  UseGuards,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { RequestResetPasswordDto } from './dto/request-reset-password.dto';
-import { ResetPasswordDto } from './dto/reset-password.dto';
+import { RequestResetPasswordDto } from './dtos/request-reset-password.dto';
+import { ResetPasswordDto } from './dtos/reset-password.dto';
+import { TwoFactorDto } from './dtos/two-factor.dto';
+import { EnableTwoFactorDto } from './dtos/enable-2fa.dto';
+import { JwtAuthGuard } from './guards/jwt-auth/jwt-auth.guard';
+import { Roles } from './decorators/roles.decorator';
+import { RolesGuard } from './guards/roles/roles.guard';
 
 @Controller('auth')
 export class AuthController {
@@ -30,5 +38,30 @@ export class AuthController {
   @Post('reset-password')
   async resetPassword(@Body() dto: ResetPasswordDto) {
     return this.authService.resetPassword(dto.token, dto.newPassword);
+  }
+
+  @Post('2fa/verify')
+  async verifyTwoFactor(@Body() dto: TwoFactorDto) {
+    return this.authService.verifyTwoFactorCode(dto.token);
+  }
+
+  @Patch('2fa/enable')
+  @UseGuards(JwtAuthGuard)
+  async enableTwoFactor(@Request() req, @Body() dto: EnableTwoFactorDto) {
+    const user = req.user; // Obtiene el usuario desde el JWT
+    return this.authService.enableTwoFactor(user, dto.enable);
+  }
+
+  @Patch('admin-only')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('admin') // Solo accesible para administradores
+  async adminOnly() {
+    return { message: 'Este es un recurso solo para administradores' };
+  }
+
+  @Patch('user/profile')
+  @UseGuards(JwtAuthGuard)
+  async updateUserProfile() {
+    return { message: 'Actualización de perfil exitosa' };
   }
 }
