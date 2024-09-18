@@ -26,18 +26,17 @@ export class AuthService {
     const { email, password } = registerDto;
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Genera el token de verificación
     const emailVerificationToken = uuidv4();
 
     const user = this.userRepository.create({
       email,
       password: hashedPassword,
       emailVerificationToken,
+      roles: ['user'], // Asignar rol por defecto
     });
 
     const savedUser = await this.userRepository.save(user);
 
-    // Enviar correo de verificación
     this.sendVerificationEmail(email, emailVerificationToken);
 
     return savedUser;

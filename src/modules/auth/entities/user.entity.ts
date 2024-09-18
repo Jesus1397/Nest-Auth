@@ -28,4 +28,7 @@ export class User {
 
   @Column({ default: false })
   isBlocked: boolean;
+
+  @Column('simple-array', { nullable: true })
+  roles: string[]; // Añadido para manejar roles de usuario
 }

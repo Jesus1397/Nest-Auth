@@ -6,6 +6,7 @@ import { AuthModule } from './modules/auth/auth.module';
 import { ConfigModule } from '@nestjs/config';
 import { LoggerMiddleware } from './modules/auth/middleware/logger/logger.middleware';
 import { BlockUserMiddleware } from './modules/auth/middleware/block-user/block-user.middleware';
+import { User } from './modules/auth/entities/user.entity';
 
 @Module({
   imports: [
@@ -19,8 +20,8 @@ import { BlockUserMiddleware } from './modules/auth/middleware/block-user/block-
       username: process.env.DB_USERNAME,
       password: process.env.DB_PASSWORD,
       database: process.env.DB_NAME,
-      autoLoadEntities: true,
-      synchronize: true, // En producción, mejor usar migraciones
+      entities: [User],
+      synchronize: true, // Solo para desarrollo
     }),
     AuthModule,
   ],
@@ -29,7 +30,8 @@ import { BlockUserMiddleware } from './modules/auth/middleware/block-user/block-
 })
 export class AppModule {
   configure(consumer: MiddlewareConsumer) {
-    consumer.apply(LoggerMiddleware).forRoutes('*'); // Aplica el middleware a todas las rutas
-    consumer.apply(BlockUserMiddleware).forRoutes('protected/*'); // Aplica solo a rutas protegidas
+    consumer.apply(LoggerMiddleware).forRoutes('*'); // Aplica LoggerMiddleware a todas las rutas
+
+    consumer.apply(BlockUserMiddleware).forRoutes('*'); // Aplica BlockUserMiddleware a todas las rutas; ajusta según tus necesidades
   }
 }

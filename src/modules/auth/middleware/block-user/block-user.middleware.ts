@@ -3,17 +3,31 @@ import {
   NestMiddleware,
   UnauthorizedException,
 } from '@nestjs/common';
-import { Request, Response, NextFunction } from 'express';
+import { Response, NextFunction } from 'express';
+import { Repository } from 'typeorm';
+import { InjectRepository } from '@nestjs/typeorm';
+import { RequestWithUser } from 'src/common/interfaces/request-with-user.interface';
+import { User } from '../../entities/user.entity';
 
 @Injectable()
 export class BlockUserMiddleware implements NestMiddleware {
-  constructor(private readonly userRepository: UserRepository) {}
+  constructor(
+    @InjectRepository(User)
+    private readonly userRepository: Repository<User>,
+  ) {}
 
-  async use(req: Request, res: Response, next: NextFunction) {
-    const user = await this.userRepository.findOne(req.user.id);
+  async use(req: RequestWithUser, res: Response, next: NextFunction) {
+    if (!req.user) {
+      // Si no hay usuario en la solicitud, continuar
+      return next();
+    }
+
+    const user = await this.userRepository.findOne({
+      where: { id: req.user.id },
+    });
 
     if (user?.isBlocked) {
-      throw new UnauthorizedException('Your account is blocked');
+      throw new UnauthorizedException('Tu cuenta está bloqueada');
     }
 
     next();
