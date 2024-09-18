@@ -17,6 +17,7 @@ import { EnableTwoFactorDto } from './dtos/enable-2fa.dto';
 import { JwtAuthGuard } from './guards/jwt-auth/jwt-auth.guard';
 import { Roles } from './decorators/roles.decorator';
 import { RolesGuard } from './guards/roles/roles.guard';
+import { RequestWithUser } from 'src/common/interfaces/request-with-user.interface';
 
 @Controller('auth')
 export class AuthController {
@@ -47,8 +48,11 @@ export class AuthController {
 
   @Patch('2fa/enable')
   @UseGuards(JwtAuthGuard)
-  async enableTwoFactor(@Request() req, @Body() dto: EnableTwoFactorDto) {
-    const user = req.user; // Obtiene el usuario desde el JWT
+  async enableTwoFactor(
+    @Request() req: RequestWithUser,
+    @Body() dto: EnableTwoFactorDto,
+  ) {
+    const user = req.user;
     return this.authService.enableTwoFactor(user, dto.enable);
   }
 
