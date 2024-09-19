@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   Injectable,
+  InternalServerErrorException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
@@ -43,38 +44,39 @@ export class AuthService {
   }
 
   async login(loginDto: LoginDto) {
-    const { email, password } = loginDto;
-    const user = await this.userRepository.findOne({ where: { email } });
+    try {
+      const { email, password } = loginDto;
+      console.log('Login attempt:', email);
 
-    if (!user || !(await bcrypt.compare(password, user.password))) {
-      throw new UnauthorizedException('Invalid credentials');
-    }
+      const user = await this.userRepository.findOne({ where: { email } });
+      console.log('User found:', user);
 
-    // Si el 2FA está habilitado, generamos un código temporal
-    if (user.isTwoFactorEnabled) {
-      const twoFactorCode = speakeasy.totp({
-        secret: process.env.TWO_FACTOR_SECRET, // Puede ser único por usuario o compartido
-        encoding: 'base32',
+      if (!user) {
+        throw new UnauthorizedException('User not found');
+      }
+
+      const passwordMatch = await bcrypt.compare(password, user.password);
+      console.log('Password match:', passwordMatch);
+
+      if (!passwordMatch) {
+        throw new UnauthorizedException('Invalid password');
+      }
+
+      // Si pasa las verificaciones, genera el token
+      const payload = { email: user.email, sub: user.id };
+      console.log('JWT Payload:', payload);
+
+      const token = this.jwtService.sign(payload);
+      console.log('Generated JWT:', token);
+
+      return { access_token: token };
+    } catch (error) {
+      console.error('Error during login:', error); // Log completo del error
+      throw new InternalServerErrorException({
+        message: 'Error during login process',
+        details: error.message,
       });
-
-      // Guardar el código 2FA en la base de datos temporalmente (dependiendo de la lógica)
-      user.twoFactorCode = twoFactorCode;
-      await this.userRepository.save(user);
-
-      // Enviar el código por email (o notificación)
-      this.sendTwoFactorCode(user.email, twoFactorCode);
-
-      return {
-        message: 'Se ha enviado un código 2FA a tu email',
-      };
     }
-
-    const payload = { email: user.email, sub: user.id };
-    const token = this.jwtService.sign(payload);
-
-    return {
-      access_token: token,
-    };
   }
 
   async sendVerificationEmail(email: string, token: string) {

@@ -8,13 +8,18 @@ import { User } from './entities/user.entity';
 import { JwtAuthGuard } from './guards/jwt-auth/jwt-auth.guard';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { BlockUserMiddleware } from './middleware/block-user/block-user.middleware';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 
 @Module({
   imports: [
     PassportModule,
-    JwtModule.register({
-      secret: process.env.JWT_SECRET,
-      signOptions: { expiresIn: '1h' },
+    JwtModule.registerAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: async (configService: ConfigService) => ({
+        secret: configService.get<string>('JWT_SECRET'),
+        signOptions: { expiresIn: '1h' },
+      }),
     }),
     TypeOrmModule.forFeature([User]),
   ],
