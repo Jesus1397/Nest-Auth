@@ -5,7 +5,6 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from './modules/auth/auth.module';
 import { ConfigModule } from '@nestjs/config';
 import { LoggerMiddleware } from './modules/auth/middleware/logger/logger.middleware';
-import { BlockUserMiddleware } from './modules/auth/middleware/block-user/block-user.middleware';
 import { User } from './modules/auth/entities/user.entity';
 
 @Module({
@@ -31,7 +30,5 @@ import { User } from './modules/auth/entities/user.entity';
 export class AppModule {
   configure(consumer: MiddlewareConsumer) {
     consumer.apply(LoggerMiddleware).forRoutes('*'); // Aplica LoggerMiddleware a todas las rutas
-
-    consumer.apply(BlockUserMiddleware).forRoutes('*'); // Aplica BlockUserMiddleware a todas las rutas; ajusta según tus necesidades
   }
 }
