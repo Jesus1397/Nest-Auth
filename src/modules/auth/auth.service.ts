@@ -118,7 +118,11 @@ export class AuthService {
   }
 
   async requestPasswordReset(email: string) {
-    const user = await this.userRepository.findOne({ where: { email } });
+    console.log('Buscando usuario con email:', email);
+    const user = await this.userRepository.findOne({
+      where: { email: email.toLowerCase() },
+    });
+    console.log('Usuario encontrado:', user);
 
     if (!user) {
       throw new BadRequestException('Email not found');
@@ -141,7 +145,7 @@ export class AuthService {
       },
     });
 
-    const resetLink = `${process.env.FRONTEND_URL}/reset-password?token=${token}`;
+    const resetLink = `${process.env.FRONTEND_URL}/auth/reset-password?token=${token}`;
 
     const mailOptions = {
       from: process.env.EMAIL_USER,
@@ -153,22 +157,37 @@ export class AuthService {
     await transporter.sendMail(mailOptions);
   }
 
-  async resetPassword(token: string, newPassword: string) {
-    const user = await this.userRepository.findOne({
-      where: { emailVerificationToken: token },
-    });
+  async resetPassword(token: string, newPassword: string): Promise<string> {
+    try {
+      console.log('Token recibido:', token);
+      console.log('Nueva contraseña recibida:', newPassword);
 
-    if (!user) {
-      throw new BadRequestException('Invalid token');
+      const user = await this.userRepository.findOne({
+        where: { emailVerificationToken: token },
+      });
+
+      if (!user) {
+        console.log('Usuario no encontrado con este token.');
+        throw new BadRequestException('Invalid token');
+      }
+
+      console.log('Usuario encontrado:', user.email);
+
+      const hashedPassword = await bcrypt.hash(newPassword, 10);
+      user.password = hashedPassword;
+      user.emailVerificationToken = null;
+
+      await this.userRepository.save(user);
+
+      console.log('Contraseña cambiada con éxito para el usuario:', user.email);
+
+      return 'Password cambiada con éxito'; // Mensaje de éxito
+    } catch (error) {
+      console.error('Error al restablecer la contraseña:', error.message); // Log de error para depuración
+      throw new InternalServerErrorException(
+        'Error al restablecer la contraseña',
+      );
     }
-
-    const hashedPassword = await bcrypt.hash(newPassword, 10);
-    user.password = hashedPassword;
-    user.emailVerificationToken = null; // Elimina el token una vez se cambia la contraseña
-
-    await this.userRepository.save(user);
-
-    return 'Password cambiada con éxito';
   }
 
   async sendTwoFactorCode(email: string, code: string) {
