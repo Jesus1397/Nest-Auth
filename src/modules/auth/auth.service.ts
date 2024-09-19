@@ -86,7 +86,7 @@ export class AuthService {
       },
     });
 
-    const verificationLink = `${process.env.FRONTEND_URL}/verify-email?token=${token}`;
+    const verificationLink = `${process.env.FRONTEND_URL}/auth/verify-email?token=${token}`;
 
     const mailOptions = {
       from: process.env.EMAIL_USER,
