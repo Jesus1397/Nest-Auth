@@ -55,8 +55,13 @@ export class AuthController {
   }
 
   @Post('2fa/verify')
-  async verifyTwoFactor(@Body() dto: TwoFactorDto) {
-    return this.authService.verifyTwoFactorCode(dto.token);
+  @UseGuards(JwtAuthGuard)
+  async verifyTwoFactor(
+    @Request() req: RequestWithUser,
+    @Body() dto: TwoFactorDto,
+  ) {
+    const user = req.user;
+    return this.authService.verifyTwoFactorCode(dto.token, user);
   }
 
   @Patch('2fa/enable')
@@ -69,9 +74,16 @@ export class AuthController {
     return this.authService.enableTwoFactor(user, dto.enable);
   }
 
+  @Get('2fa/generate')
+  @UseGuards(JwtAuthGuard)
+  async generateTwoFactorSecret(@Request() req: RequestWithUser) {
+    const user = req.user;
+    return this.authService.generateTwoFactorSecret(user);
+  }
+
   @Patch('admin-only')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('admin') // Solo accesible para administradores
+  @Roles('admin')
   async adminOnly() {
     return { message: 'Este es un recurso solo para administradores' };
   }

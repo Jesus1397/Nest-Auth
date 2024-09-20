@@ -13,7 +13,7 @@ import { RegisterDto } from './dtos/register.dto';
 import { LoginDto } from './dtos/login.dto';
 import { v4 as uuidv4 } from 'uuid';
 import * as nodemailer from 'nodemailer';
-import * as speakeasy from 'speakeasy'; // Para generar códigos de doble factor
+import * as speakeasy from 'speakeasy';
 import * as qrcode from 'qrcode';
 
 @Injectable()
@@ -22,6 +22,67 @@ export class AuthService {
     @InjectRepository(User) private userRepository: Repository<User>,
     private jwtService: JwtService,
   ) {}
+
+  private async sendVerificationEmail(email: string, token: string) {
+    const transporter = nodemailer.createTransport({
+      service: 'gmail', // O el servicio que prefieras
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASSWORD,
+      },
+    });
+
+    const verificationLink = `${process.env.FRONTEND_URL}/auth/verify-email?token=${token}`;
+
+    const mailOptions = {
+      from: process.env.EMAIL_USER,
+      to: email,
+      subject: 'Confirmación de correo electrónico',
+      text: `Haz clic en el siguiente enlace para verificar tu cuenta: ${verificationLink}`,
+    };
+
+    await transporter.sendMail(mailOptions);
+  }
+
+  private async sendPasswordResetEmail(email: string, token: string) {
+    const transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASSWORD,
+      },
+    });
+
+    const resetLink = `${process.env.FRONTEND_URL}/auth/reset-password?token=${token}`;
+
+    const mailOptions = {
+      from: process.env.EMAIL_USER,
+      to: email,
+      subject: 'Solicitud de cambio de contraseña',
+      text: `Haz clic en el siguiente enlace para cambiar tu contraseña: ${resetLink}`,
+    };
+
+    await transporter.sendMail(mailOptions);
+  }
+
+  private async sendTwoFactorCode(email: string, code: string) {
+    const transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASSWORD,
+      },
+    });
+
+    const mailOptions = {
+      from: process.env.EMAIL_USER,
+      to: email,
+      subject: 'Código de autenticación de doble factor',
+      text: `Tu código 2FA es: ${code}`,
+    };
+
+    await transporter.sendMail(mailOptions);
+  }
 
   async register(registerDto: RegisterDto): Promise<User> {
     const { email, password } = registerDto;
@@ -33,7 +94,7 @@ export class AuthService {
       email,
       password: hashedPassword,
       emailVerificationToken,
-      roles: ['user'], // Asignar rol por defecto
+      roles: ['user'],
     });
 
     const savedUser = await this.userRepository.save(user);
@@ -79,27 +140,6 @@ export class AuthService {
     }
   }
 
-  async sendVerificationEmail(email: string, token: string) {
-    const transporter = nodemailer.createTransport({
-      service: 'gmail', // O el servicio que prefieras
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASSWORD,
-      },
-    });
-
-    const verificationLink = `${process.env.FRONTEND_URL}/auth/verify-email?token=${token}`;
-
-    const mailOptions = {
-      from: process.env.EMAIL_USER,
-      to: email,
-      subject: 'Confirmación de correo electrónico',
-      text: `Haz clic en el siguiente enlace para verificar tu cuenta: ${verificationLink}`,
-    };
-
-    await transporter.sendMail(mailOptions);
-  }
-
   async verifyEmail(token: string): Promise<string> {
     const user = await this.userRepository.findOne({
       where: { emailVerificationToken: token },
@@ -136,27 +176,6 @@ export class AuthService {
     this.sendPasswordResetEmail(user.email, resetToken);
   }
 
-  async sendPasswordResetEmail(email: string, token: string) {
-    const transporter = nodemailer.createTransport({
-      service: 'gmail',
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASSWORD,
-      },
-    });
-
-    const resetLink = `${process.env.FRONTEND_URL}/auth/reset-password?token=${token}`;
-
-    const mailOptions = {
-      from: process.env.EMAIL_USER,
-      to: email,
-      subject: 'Solicitud de cambio de contraseña',
-      text: `Haz clic en el siguiente enlace para cambiar tu contraseña: ${resetLink}`,
-    };
-
-    await transporter.sendMail(mailOptions);
-  }
-
   async resetPassword(token: string, newPassword: string): Promise<string> {
     try {
       console.log('Token recibido:', token);
@@ -190,45 +209,28 @@ export class AuthService {
     }
   }
 
-  async sendTwoFactorCode(email: string, code: string) {
-    const transporter = nodemailer.createTransport({
-      service: 'gmail',
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASSWORD,
-      },
+  async verifyTwoFactorCode(token: string, user: User): Promise<any> {
+    // Verifica si el usuario tiene 2FA habilitado
+    if (!user.isTwoFactorEnabled || !user.twoFactorSecret) {
+      throw new UnauthorizedException('2FA is not enabled for this user');
+    }
+
+    // Verifica el código TOTP usando el secreto almacenado en el usuario
+    const isCodeValid = speakeasy.totp.verify({
+      secret: user.twoFactorSecret, // Secreto 2FA del usuario
+      encoding: 'base32',
+      token, // Código TOTP que el usuario envió
     });
 
-    const mailOptions = {
-      from: process.env.EMAIL_USER,
-      to: email,
-      subject: 'Código de autenticación de doble factor',
-      text: `Tu código 2FA es: ${code}`,
-    };
-
-    await transporter.sendMail(mailOptions);
-  }
-
-  async verifyTwoFactorCode(token: string): Promise<any> {
-    const user = await this.userRepository.findOne({
-      where: { twoFactorCode: token },
-    });
-
-    if (!user) {
+    if (!isCodeValid) {
       throw new UnauthorizedException('Invalid 2FA token');
     }
 
-    // Generar JWT una vez verificado el 2FA
+    // Si el código es válido, genera un nuevo JWT
     const payload = { email: user.email, sub: user.id };
     const jwt = this.jwtService.sign(payload);
 
-    // Limpiar el código 2FA para que no se pueda usar de nuevo
-    user.twoFactorCode = null;
-    await this.userRepository.save(user);
-
-    return {
-      access_token: jwt,
-    };
+    return { access_token: jwt };
   }
 
   async enableTwoFactor(user: User, enable: boolean) {
