@@ -2,84 +2,188 @@
   <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
 </p>
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+## Flujo de Uso - API NestJS
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://coveralls.io/github/nestjs/nest?branch=master" target="_blank"><img src="https://coveralls.io/repos/github/nestjs/nest/badge.svg?branch=master#9" alt="Coverage" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+### 1\. Registro de Usuario
 
-## Description
-
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
-
-## Project setup
+#### Endpoint
 
 ```bash
-$ npm install
+POST /auth/register
 ```
 
-## Compile and run the project
+El usuario se registra proporcionando un **email** y una **contraseña**.
+
+#### Respuesta
+
+```json
+{
+"message": "📧 Registration successful. Verification email sent.",
+"user": {
+  "id": 1,
+  "email": "user@example.com",
+  "roles": \["user"\],
+  "emailVerified": false
+  }
+}
+```
+
+### 2\. Verificación de Email
+
+#### Endpoint
 
 ```bash
-# development
-$ npm run start
-
-# watch mode
-$ npm run start:dev
-
-# production mode
-$ npm run start:prod
+GET /auth/verify-email
 ```
 
-## Run tests
+El usuario verifica su email a través del token de verificación enviado por correo electrónico.
+
+#### Respuesta
+
+```json
+{
+  "message": "📧 Email successfully verified"
+}
+```
+
+## 3\. Inicio de Sesión
+
+#### Endpoint
 
 ```bash
-# unit tests
-$ npm run test
-
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
+POST /auth/login
 ```
 
-## Resources
+El usuario proporciona su **email** y **contraseña** para iniciar sesión.
 
-Check out a few resources that may come in handy when working with NestJS:
+#### Respuesta
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+```json
+{
+  "message": "🔐 Login successful",
+  "access_token": "jwt-token-aqui"
+}
+```
 
-## Support
+## 4\. Solicitud de Restablecimiento de Contraseña
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+#### Endpoint
 
-## Stay in touch
+```bash
+POST /auth/request-password-reset
+```
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+El usuario puede solicitar un restablecimiento de contraseña proporcionando su **email**.
 
-## License
+#### Respuesta
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+```json
+{
+  "message": "✉️ Password reset email sent"
+}
+```
+
+## 5\. Restablecimiento de Contraseña
+
+#### Endpoint
+
+```bash
+POST /auth/reset-password
+```
+
+El usuario restablece su contraseña utilizando el **emailVerificationToken** y la nueva **contraseña**.
+
+#### Respuesta
+
+```json
+{
+  "message": "🔑 Password changed successfully"
+}
+```
+
+## 6\. Activar Autenticación de Doble Factor (2FA)
+
+#### Endpoint
+
+```bash
+GET /auth/2fa/generate
+```
+
+El usuario genera un código QR para configurar la autenticación de doble factor (2FA).
+
+#### Respuesta
+
+El backend enviará una imagen PNG con el código QR que el usuario debe escanear con su aplicación 2FA.
+
+## 7\. Verificar el Código de 2FA
+
+#### Endpoint
+
+```bash
+POST /auth/2fa/verify
+```
+
+El usuario verifica el código de 2FA enviado por su aplicación de autenticación.
+
+#### Respuesta
+
+```json
+{
+  "message": "✅ 2FA verified",
+  "access_token": "jwt-token-aqui"
+}
+```
+
+## 8\. Habilitar o Deshabilitar el 2FA
+
+#### Endpoint
+
+```bash
+POST /auth/2fa/enable
+```
+
+El usuario puede habilitar o deshabilitar la autenticación de doble factor enviando un booleano **enable**.
+
+#### Respuesta
+
+```json
+{
+  "message": "🔒 2FA enabled successfully" // o "🔓 2FA disabled successfully"
+}
+```
+
+## 9\. Actualizar Perfil de Usuario
+
+#### Endpoint
+
+```bash
+PATCH /auth/user/profile
+```
+
+El usuario puede actualizar su **nombre** o **email**.
+
+#### Respuesta
+
+```json
+{
+  "message": "👤 Profile updated successfully"
+}
+```
+
+## 10\. Acceso de Administrador
+
+#### Endpoint
+
+```bash
+GET /auth/admin
+```
+
+Los usuarios con el rol de **admin** pueden acceder a este endpoint.
+
+#### Respuesta
+
+```json
+{
+  "message": "🔐 Admin access granted"
+}
+```
