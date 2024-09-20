@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
+import { Response } from 'express';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { User } from './entities/user.entity';
@@ -47,33 +48,33 @@ export class AuthService {
       const user = await this.userRepository.findOne({ where: { email } });
 
       if (!user) {
-        throw new UnauthorizedException('User not found');
+        throw new UnauthorizedException('❌ User not found');
       }
 
       const passwordMatch = await bcrypt.compare(password, user.password);
       if (!passwordMatch) {
-        throw new UnauthorizedException('Invalid password');
+        throw new UnauthorizedException('🔑 Invalid password');
       }
 
       const payload = { email: user.email, sub: user.id };
       const token = this.jwtService.sign(payload);
 
-      return { access_token: token };
+      return { emoji: '🔐', message: 'Login successful', access_token: token };
     } catch (error) {
       throw new InternalServerErrorException({
-        message: 'Error during login process',
+        message: '⚠️ Error during login process',
         details: error.message,
       });
     }
   }
 
-  async verifyEmail(token: string): Promise<string> {
+  async verifyEmail(token: string): Promise<object> {
     const user = await this.userRepository.findOne({
       where: { emailVerificationToken: token },
     });
 
     if (!user) {
-      throw new BadRequestException('Invalid token');
+      throw new BadRequestException('❌ Invalid token');
     }
 
     user.emailVerified = true;
@@ -81,16 +82,16 @@ export class AuthService {
 
     await this.userRepository.save(user);
 
-    return 'Email verificado con éxito';
+    return { message: '📧 Email successfully verified' };
   }
 
-  async requestPasswordReset(email: string) {
+  async requestPasswordReset(email: string): Promise<object> {
     const user = await this.userRepository.findOne({
       where: { email: email.toLowerCase() },
     });
 
     if (!user) {
-      throw new BadRequestException('Email not found');
+      throw new BadRequestException('📭 Email not found');
     }
 
     const resetToken = uuidv4();
@@ -99,16 +100,16 @@ export class AuthService {
 
     this.sendPasswordResetEmail(user.email, resetToken);
 
-    return 'Email enviado';
+    return { message: '✉️ Password reset email sent' };
   }
 
-  async resetPassword(token: string, newPassword: string): Promise<string> {
+  async resetPassword(token: string, newPassword: string): Promise<object> {
     const user = await this.userRepository.findOne({
       where: { emailVerificationToken: token },
     });
 
     if (!user) {
-      throw new BadRequestException('Invalid token');
+      throw new BadRequestException('🔒 Invalid token');
     }
 
     const hashedPassword = await bcrypt.hash(newPassword, 10);
@@ -117,12 +118,12 @@ export class AuthService {
 
     await this.userRepository.save(user);
 
-    return 'Password cambiada con éxito';
+    return { message: '🔑 Password changed successfully' };
   }
 
-  async verifyTwoFactorCode(token: string, user: User): Promise<any> {
+  async verifyTwoFactorCode(token: string, user: User): Promise<object> {
     if (!user.isTwoFactorEnabled || !user.twoFactorSecret) {
-      throw new UnauthorizedException('2FA is not enabled for this user');
+      throw new UnauthorizedException('❌ 2FA is not enabled for this user');
     }
 
     const isCodeValid = speakeasy.totp.verify({
@@ -132,23 +133,25 @@ export class AuthService {
     });
 
     if (!isCodeValid) {
-      throw new UnauthorizedException('Invalid 2FA token');
+      throw new UnauthorizedException('🔐 Invalid 2FA token');
     }
 
     const payload = { email: user.email, sub: user.id };
     const jwt = this.jwtService.sign(payload);
 
-    return { access_token: jwt };
+    return { message: '✅ 2FA verified', access_token: jwt };
   }
 
-  async enableTwoFactor(user: User, enable: boolean) {
+  async enableTwoFactor(user: User, enable: boolean): Promise<object> {
     user.isTwoFactorEnabled = enable;
     await this.userRepository.save(user);
 
-    return { message: `2FA ${enable ? 'enabled' : 'disabled'} successfully` };
+    return {
+      message: `2FA ${enable ? ' 🔒 enabled' : '🔓 disabled'} successfully`,
+    };
   }
 
-  async generateTwoFactorSecret(user: User) {
+  async generateTwoFactorSecret(user: User, res: Response) {
     const secret = speakeasy.generateSecret();
 
     const otpAuthUrl = speakeasy.otpauthURL({
@@ -160,7 +163,10 @@ export class AuthService {
     user.twoFactorSecret = secret.base32;
     await this.userRepository.save(user);
 
-    return qrcode.toDataURL(otpAuthUrl);
+    const qrCodeBuffer = await qrcode.toBuffer(otpAuthUrl);
+
+    res.setHeader('Content-Type', 'image/png');
+    res.send(qrCodeBuffer);
   }
 
   private async sendVerificationEmail(email: string, token: string) {

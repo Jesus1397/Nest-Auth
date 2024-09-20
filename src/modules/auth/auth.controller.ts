@@ -8,7 +8,9 @@ import {
   Patch,
   Request,
   UseGuards,
+  Res,
 } from '@nestjs/common';
+import { Response } from 'express';
 import { AuthService } from './auth.service';
 import { RequestResetPasswordDto } from './dtos/request-reset-password.dto';
 import { ResetPasswordDto } from './dtos/reset-password.dto';
@@ -33,7 +35,7 @@ export class AuthController {
   @Post('login')
   async login(@Body() loginDto: LoginDto) {
     if (!loginDto.email || !loginDto.password) {
-      throw new BadRequestException('Email and password are required');
+      throw new BadRequestException('❌ Email and password are required');
     }
     return this.authService.login(loginDto);
   }
@@ -41,7 +43,7 @@ export class AuthController {
   @Get('verify-email')
   async verifyEmail(@Query('email-verification-token') token: string) {
     if (!token) {
-      throw new BadRequestException('Email-verification-toke is required');
+      throw new BadRequestException('❌ Email verification token is required');
     }
     return this.authService.verifyEmail(token);
   }
@@ -49,7 +51,7 @@ export class AuthController {
   @Post('request-password-reset')
   async requestPasswordReset(@Body() dto: RequestResetPasswordDto) {
     if (!dto.email) {
-      throw new BadRequestException('Email is required');
+      throw new BadRequestException('❌ Email is required');
     }
     return this.authService.requestPasswordReset(dto.email);
   }
@@ -59,7 +61,7 @@ export class AuthController {
     const { emailVerificationToken, newPassword } = dto;
     if (!emailVerificationToken || !newPassword) {
       throw new BadRequestException(
-        'Email verification token and new password are required',
+        '❌ Email verification token and new password are required',
       );
     }
     return this.authService.resetPassword(emailVerificationToken, newPassword);
@@ -87,9 +89,12 @@ export class AuthController {
 
   @Get('2fa/generate')
   @UseGuards(JwtAuthGuard)
-  async generateTwoFactorSecret(@Request() req: RequestWithUser) {
+  async generateTwoFactorSecret(
+    @Request() req: RequestWithUser,
+    @Res() res: Response,
+  ) {
     const user = req.user;
-    return this.authService.generateTwoFactorSecret(user);
+    return this.authService.generateTwoFactorSecret(user, res);
   }
 
   @Patch('admin-only')
