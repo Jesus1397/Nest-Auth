@@ -32,26 +32,37 @@ export class AuthController {
 
   @Post('login')
   async login(@Body() loginDto: LoginDto) {
+    if (!loginDto.email || !loginDto.password) {
+      throw new BadRequestException('Email and password are required');
+    }
     return this.authService.login(loginDto);
   }
 
   @Get('verify-email')
-  async verifyEmail(@Query('token') token: string) {
+  async verifyEmail(@Query('email-verification-token') token: string) {
     if (!token) {
-      throw new BadRequestException('Token is required');
+      throw new BadRequestException('Email-verification-toke is required');
     }
     return this.authService.verifyEmail(token);
   }
 
   @Post('request-password-reset')
   async requestPasswordReset(@Body() dto: RequestResetPasswordDto) {
+    if (!dto.email) {
+      throw new BadRequestException('Email is required');
+    }
     return this.authService.requestPasswordReset(dto.email);
   }
 
   @Post('reset-password')
   async resetPassword(@Body() dto: ResetPasswordDto) {
-    const { token, newPassword } = dto;
-    return this.authService.resetPassword(token, newPassword);
+    const { emailVerificationToken, newPassword } = dto;
+    if (!emailVerificationToken || !newPassword) {
+      throw new BadRequestException(
+        'Email verification token and new password are required',
+      );
+    }
+    return this.authService.resetPassword(emailVerificationToken, newPassword);
   }
 
   @Post('2fa/verify')
@@ -85,7 +96,7 @@ export class AuthController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('admin')
   async adminOnly() {
-    return { message: 'Este es un recurso solo para administradores' };
+    return { message: 'Acceso otorgado solo a administradores' };
   }
 
   @Patch('user/profile')
