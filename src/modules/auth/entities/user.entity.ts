@@ -31,4 +31,15 @@ export class User {
 
   @Column('simple-array', { nullable: true })
   roles: string[]; // Añadido para manejar roles de usuario
+
+  @Column({ nullable: true })
+  firstName: string;
+
+  @Column({ nullable: true })
+  lastName: string;
+
+  @Column({ nullable: true })
+  phoneNumber: string;
+  name: string;
+  phone: string;
 }

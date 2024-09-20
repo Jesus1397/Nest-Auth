@@ -16,6 +16,7 @@ import { v4 as uuidv4 } from 'uuid';
 import * as nodemailer from 'nodemailer';
 import * as speakeasy from 'speakeasy';
 import * as qrcode from 'qrcode';
+import { UpdateProfileDto } from './dtos/update-profile.dto';
 
 @Injectable()
 export class AuthService {
@@ -25,24 +26,45 @@ export class AuthService {
   ) {}
 
   async register(registerDto: RegisterDto): Promise<object> {
-    const { email, password } = registerDto;
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const emailVerificationToken = uuidv4();
+    const { email, password, confirmPassword } = registerDto;
 
-    const user = this.userRepository.create({
-      email,
-      password: hashedPassword,
-      emailVerificationToken,
-      roles: ['user'],
-    });
+    // Verifica si las contraseñas coinciden
+    if (password !== confirmPassword) {
+      throw new BadRequestException('❌ Passwords do not match');
+    }
 
-    const savedUser = await this.userRepository.save(user);
-    this.sendVerificationEmail(email, emailVerificationToken);
+    try {
+      // Verifica si el usuario ya existe
+      const existingUser = await this.userRepository.findOne({
+        where: { email },
+      });
+      if (existingUser) {
+        throw new BadRequestException('❌ User already exists with this email');
+      }
 
-    return {
-      message: '📧 Registration successful. Verification email sent.',
-      user: savedUser,
-    };
+      const hashedPassword = await bcrypt.hash(password, 10);
+      const emailVerificationToken = uuidv4();
+
+      const user = this.userRepository.create({
+        email,
+        password: hashedPassword,
+        emailVerificationToken,
+        roles: ['user'],
+      });
+
+      const savedUser = await this.userRepository.save(user);
+      this.sendVerificationEmail(email, emailVerificationToken);
+
+      return {
+        message: '📧 Registration successful. Verification email sent.',
+        user: savedUser,
+      };
+    } catch (error) {
+      throw new InternalServerErrorException({
+        message: '⚠️ Error during the registration process',
+        details: error.message,
+      });
+    }
   }
 
   async login(loginDto: LoginDto) {
@@ -192,7 +214,8 @@ export class AuthService {
     await this.sendEmail(
       email,
       'Password Reset Request',
-      `Click the following link to reset your password: ${process.env.FRONTEND_URL}/auth/reset-password?email-verification-token=${token}`,
+      `Email-verification-token: <strong>${token}</strong>
+      Click the following link to reset your password: ${process.env.FRONTEND_URL}/auth/reset-password?email-verification-token=${token}`,
     );
   }
 
@@ -213,5 +236,51 @@ export class AuthService {
     };
 
     await transporter.sendMail(mailOptions);
+  }
+
+  async getUserInfo(userId: string) {
+    const user = await this.userRepository.findOne({ where: { id: userId } });
+
+    if (!user) {
+      throw new BadRequestException('❌ User not found');
+    }
+
+    return {
+      id: user.id,
+      email: user.email,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      phoneNumber: user.phoneNumber,
+      roles: user.roles,
+      isTwoFactorEnabled: user.isTwoFactorEnabled,
+      emailVerified: user.emailVerified,
+    };
+  }
+
+  async updateProfile(
+    userId: string,
+    updateProfileDto: UpdateProfileDto,
+  ): Promise<object> {
+    const user = await this.userRepository.findOne({ where: { id: userId } });
+
+    if (!user) {
+      throw new BadRequestException('❌ User not found');
+    }
+
+    // Desestructuramos los campos del DTO
+    const { name, lastName, email, phone } = updateProfileDto;
+
+    // Actualizamos sólo los campos que fueron proporcionados
+    if (name) user.name = name;
+    if (lastName) user.lastName = lastName;
+    if (email) user.email = email;
+    if (phone) user.phone = phone;
+
+    const updatedUser = await this.userRepository.save(user);
+
+    return {
+      message: '👤 Profile updated successfully',
+      user: updatedUser,
+    };
   }
 }
