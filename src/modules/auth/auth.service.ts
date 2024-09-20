@@ -24,7 +24,7 @@ export class AuthService {
     private jwtService: JwtService,
   ) {}
 
-  async register(registerDto: RegisterDto): Promise<User> {
+  async register(registerDto: RegisterDto): Promise<object> {
     const { email, password } = registerDto;
     const hashedPassword = await bcrypt.hash(password, 10);
     const emailVerificationToken = uuidv4();
@@ -39,7 +39,10 @@ export class AuthService {
     const savedUser = await this.userRepository.save(user);
     this.sendVerificationEmail(email, emailVerificationToken);
 
-    return savedUser;
+    return {
+      message: '📧 Registration successful. Verification email sent.',
+      user: savedUser,
+    };
   }
 
   async login(loginDto: LoginDto) {
@@ -59,7 +62,7 @@ export class AuthService {
       const payload = { email: user.email, sub: user.id };
       const token = this.jwtService.sign(payload);
 
-      return { emoji: '🔐', message: 'Login successful', access_token: token };
+      return { message: '🔐 Login successful', access_token: token };
     } catch (error) {
       throw new InternalServerErrorException({
         message: '⚠️ Error during login process',
@@ -147,7 +150,7 @@ export class AuthService {
     await this.userRepository.save(user);
 
     return {
-      message: `2FA ${enable ? ' 🔒 enabled' : '🔓 disabled'} successfully`,
+      message: `2FA ${enable ? '🔒 enabled' : '🔓 disabled'} successfully`,
     };
   }
 
@@ -169,19 +172,27 @@ export class AuthService {
     res.send(qrCodeBuffer);
   }
 
+  async adminAccessOnly() {
+    return { message: '🔐 Admin access granted' };
+  }
+
+  async updateUserProfile() {
+    return { message: '👤 Profile updated successfully' };
+  }
+
   private async sendVerificationEmail(email: string, token: string) {
     await this.sendEmail(
       email,
-      'Confirmación de correo electrónico',
-      `Haz clic en el siguiente enlace para verificar tu cuenta: ${process.env.FRONTEND_URL}/auth/verify-email?email-verification-token=${token}`,
+      'Email Verification',
+      `Click the following link to verify your account: ${process.env.FRONTEND_URL}/auth/verify-email?email-verification-token=${token}`,
     );
   }
 
   private async sendPasswordResetEmail(email: string, token: string) {
     await this.sendEmail(
       email,
-      'Solicitud de cambio de contraseña',
-      `Haz clic en el siguiente enlace para cambiar tu contraseña: ${process.env.FRONTEND_URL}/auth/reset-password?email-verification-token=${token}`,
+      'Password Reset Request',
+      `Click the following link to reset your password: ${process.env.FRONTEND_URL}/auth/reset-password?email-verification-token=${token}`,
     );
   }
 

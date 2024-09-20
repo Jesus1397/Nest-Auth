@@ -29,14 +29,39 @@ export class AuthController {
 
   @Post('register')
   async register(@Body() registerDto: RegisterDto) {
+    const { email, password } = registerDto;
+
+    if (!email || !password) {
+      throw new BadRequestException('❌ Email and password are required');
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      throw new BadRequestException('❌ Invalid email format');
+    }
+
+    if (password.length < 6) {
+      throw new BadRequestException(
+        '❌ Password must be at least 6 characters long',
+      );
+    }
+
     return this.authService.register(registerDto);
   }
 
   @Post('login')
   async login(@Body() loginDto: LoginDto) {
-    if (!loginDto.email || !loginDto.password) {
+    const { email, password } = loginDto;
+
+    if (!email || !password) {
       throw new BadRequestException('❌ Email and password are required');
     }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      throw new BadRequestException('❌ Invalid email format');
+    }
+
     return this.authService.login(loginDto);
   }
 
@@ -45,46 +70,85 @@ export class AuthController {
     if (!token) {
       throw new BadRequestException('❌ Email verification token is required');
     }
+
+    if (token.length < 20) {
+      throw new BadRequestException('❌ Invalid verification token format');
+    }
+
     return this.authService.verifyEmail(token);
   }
 
   @Post('request-password-reset')
   async requestPasswordReset(@Body() dto: RequestResetPasswordDto) {
-    if (!dto.email) {
+    const { email } = dto;
+
+    if (!email) {
       throw new BadRequestException('❌ Email is required');
     }
-    return this.authService.requestPasswordReset(dto.email);
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      throw new BadRequestException('❌ Invalid email format');
+    }
+
+    return this.authService.requestPasswordReset(email);
   }
 
   @Post('reset-password')
   async resetPassword(@Body() dto: ResetPasswordDto) {
     const { emailVerificationToken, newPassword } = dto;
+
     if (!emailVerificationToken || !newPassword) {
       throw new BadRequestException(
         '❌ Email verification token and new password are required',
       );
     }
+
+    if (emailVerificationToken.length < 20) {
+      throw new BadRequestException('❌ Invalid verification token format');
+    }
+
+    if (newPassword.length < 6) {
+      throw new BadRequestException(
+        '❌ Password must be at least 6 characters long',
+      );
+    }
+
     return this.authService.resetPassword(emailVerificationToken, newPassword);
   }
 
   @Post('2fa/verify')
   @UseGuards(JwtAuthGuard)
   async verifyTwoFactor(
+    @Body() twoFactorDto: TwoFactorDto,
     @Request() req: RequestWithUser,
-    @Body() dto: TwoFactorDto,
   ) {
-    const user = req.user;
-    return this.authService.verifyTwoFactorCode(dto.token, user);
+    const { token } = twoFactorDto;
+
+    if (!token) {
+      throw new BadRequestException('❌ 2FA token is required');
+    }
+
+    if (token.length !== 6) {
+      throw new BadRequestException('❌ 2FA token must be 6 digits');
+    }
+
+    return this.authService.verifyTwoFactorCode(token, req.user);
   }
 
-  @Patch('2fa/enable')
+  @Post('2fa/enable')
   @UseGuards(JwtAuthGuard)
   async enableTwoFactor(
+    @Body() enableTwoFactorDto: EnableTwoFactorDto,
     @Request() req: RequestWithUser,
-    @Body() dto: EnableTwoFactorDto,
   ) {
-    const user = req.user;
-    return this.authService.enableTwoFactor(user, dto.enable);
+    const { enable } = enableTwoFactorDto;
+
+    if (typeof enable !== 'boolean') {
+      throw new BadRequestException('❌ "enable" must be a boolean');
+    }
+
+    return this.authService.enableTwoFactor(req.user, enable);
   }
 
   @Get('2fa/generate')
@@ -93,20 +157,36 @@ export class AuthController {
     @Request() req: RequestWithUser,
     @Res() res: Response,
   ) {
-    const user = req.user;
-    return this.authService.generateTwoFactorSecret(user, res);
+    if (!req.user) {
+      throw new BadRequestException('❌ User must be authenticated');
+    }
+
+    return this.authService.generateTwoFactorSecret(req.user, res);
   }
 
-  @Patch('admin-only')
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Get('admin')
   @Roles('admin')
-  async adminOnly() {
-    return { message: 'Acceso otorgado solo a administradores' };
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  async adminAccessOnly() {
+    return this.authService.adminAccessOnly();
   }
 
   @Patch('user/profile')
   @UseGuards(JwtAuthGuard)
-  async updateUserProfile() {
-    return { message: 'Actualización de perfil exitosa' };
+  async updateProfile(@Request() req: RequestWithUser, @Body() body) {
+    const { name, email } = body;
+
+    if (!name && !email) {
+      throw new BadRequestException('❌ Name or email is required to update');
+    }
+
+    if (email) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        throw new BadRequestException('❌ Invalid email format');
+      }
+    }
+
+    return this.authService.updateUserProfile();
   }
 }
