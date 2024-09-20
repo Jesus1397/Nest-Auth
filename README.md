@@ -22,7 +22,7 @@ El usuario se registra proporcionando un **email** y una **contraseña**.
 "user": {
   "id": 1,
   "email": "user@example.com",
-  "roles": \["user"\],
+  "roles": ["user"],
   "emailVerified": false
   }
 }
@@ -61,7 +61,7 @@ El usuario proporciona su **email** y **contraseña** para iniciar sesión.
 ```json
 {
   "message": "🔐 Login successful",
-  "access_token": "jwt-token-aqui"
+  "access_token": "jwt-token"
 }
 ```
 
@@ -148,7 +148,7 @@ El usuario puede habilitar o deshabilitar la autenticación de doble factor envi
 
 ```json
 {
-  "message": "🔒 2FA enabled successfully" // o "🔓 2FA disabled successfully"
+  "message": "🔒 2FA enabled successfully" o "🔓 2FA disabled successfully"
 }
 ```
 
