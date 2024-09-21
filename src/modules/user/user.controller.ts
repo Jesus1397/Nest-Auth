@@ -9,12 +9,12 @@ import {
   Body,
   BadRequestException,
 } from '@nestjs/common';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth/jwt-auth.guard';
-import { RolesGuard } from '../auth/guards/roles/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { RequestWithUser } from 'src/common/interfaces/request-with-user.interface';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { UserService } from './user.service';
+import { JwtAuthGuard } from 'src/common/guards/jwt-auth/jwt-auth.guard';
+import { RolesGuard } from 'src/common/guards/roles/roles.guard';
 
 @Controller('user')
 export class UserController {
@@ -51,14 +51,14 @@ export class UserController {
     return this.userService.grantAdminRole(userId);
   }
 
-  @Get('all')
+  @Get('admin/all')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('admin')
   async getAllUsers() {
     return this.userService.getAllUsers();
   }
 
-  @Delete(':id')
+  @Delete('admin/:id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('admin')
   async deleteUser(@Param('id') userId: string) {
