@@ -30,7 +30,7 @@ export class User {
   isBlocked: boolean;
 
   @Column('simple-array', { nullable: true })
-  roles: string[]; // Añadido para manejar roles de usuario
+  roles: string[];
 
   @Column({ nullable: true })
   firstName: string;

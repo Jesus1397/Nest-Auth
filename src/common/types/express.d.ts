@@ -1,11 +1,9 @@
-// src/types/express.d.ts
-
-import { User } from '../entities/user.entity'; // Asegúrate de que esta ruta sea correcta
+import { User } from '../entities/user.entity';
 
 declare global {
   namespace Express {
     interface Request {
-      user?: User; // Extiende Request para incluir la propiedad user
+      user?: User;
     }
   }
 }

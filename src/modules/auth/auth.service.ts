@@ -9,14 +9,14 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Response } from 'express';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
-import { User } from './entities/user.entity';
+import { User } from '../user/entities/user.entity';
 import { RegisterDto } from './dtos/register.dto';
 import { LoginDto } from './dtos/login.dto';
 import { v4 as uuidv4 } from 'uuid';
 import * as nodemailer from 'nodemailer';
 import * as speakeasy from 'speakeasy';
 import * as qrcode from 'qrcode';
-import { UpdateProfileDto } from './dtos/update-profile.dto';
+import { UpdateProfileDto } from '../user/dto/update-profile.dto';
 
 @Injectable()
 export class AuthService {
@@ -28,13 +28,11 @@ export class AuthService {
   async register(registerDto: RegisterDto): Promise<object> {
     const { email, password, confirmPassword } = registerDto;
 
-    // Verifica si las contraseñas coinciden
     if (password !== confirmPassword) {
       throw new BadRequestException('❌ Passwords do not match');
     }
 
     try {
-      // Verifica si el usuario ya existe
       const existingUser = await this.userRepository.findOne({
         where: { email },
       });
@@ -263,10 +261,8 @@ export class AuthService {
       throw new BadRequestException('❌ User not found');
     }
 
-    // Desestructuramos los campos del DTO
     const { name, lastName, email, phone } = updateProfileDto;
 
-    // Actualizamos sólo los campos que fueron proporcionados
     if (name) user.name = name;
     if (lastName) user.lastName = lastName;
     if (email) user.email = email;
