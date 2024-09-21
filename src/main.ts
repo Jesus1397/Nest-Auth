@@ -8,3 +8,6 @@ async function bootstrap() {
   await app.listen(3000);
 }
 bootstrap();
+
+//no loguearse 2 veces
+//re password cuando se pide un cambio de contraseña

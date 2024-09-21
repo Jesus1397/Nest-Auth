@@ -16,7 +16,6 @@ import { v4 as uuidv4 } from 'uuid';
 import * as nodemailer from 'nodemailer';
 import * as speakeasy from 'speakeasy';
 import * as qrcode from 'qrcode';
-import { UpdateProfileDto } from '../user/dto/update-profile.dto';
 
 @Injectable()
 export class AuthService {
@@ -230,49 +229,5 @@ export class AuthService {
     };
 
     await transporter.sendMail(mailOptions);
-  }
-
-  async getUserInfo(userId: string) {
-    const user = await this.userRepository.findOne({ where: { id: userId } });
-
-    if (!user) {
-      throw new BadRequestException('❌ User not found');
-    }
-
-    return {
-      id: user.id,
-      email: user.email,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      phoneNumber: user.phoneNumber,
-      roles: user.roles,
-      isTwoFactorEnabled: user.isTwoFactorEnabled,
-      emailVerified: user.emailVerified,
-    };
-  }
-
-  async updateProfile(
-    userId: string,
-    updateProfileDto: UpdateProfileDto,
-  ): Promise<object> {
-    const user = await this.userRepository.findOne({ where: { id: userId } });
-
-    if (!user) {
-      throw new BadRequestException('❌ User not found');
-    }
-
-    const { firstName, lastName, email, phone } = updateProfileDto;
-
-    if (firstName) user.firstName = firstName;
-    if (lastName) user.lastName = lastName;
-    if (email) user.email = email;
-    if (phone) user.phone = phone;
-
-    const updatedUser = await this.userRepository.save(user);
-
-    return {
-      message: '👤 Profile updated successfully',
-      user: updatedUser,
-    };
   }
 }
