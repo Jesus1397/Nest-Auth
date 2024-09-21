@@ -4,8 +4,9 @@ import { AppService } from './app.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from './modules/auth/auth.module';
 import { ConfigModule } from '@nestjs/config';
-import { LoggerMiddleware } from './modules/auth/middleware/logger/logger.middleware';
 import { User } from './modules/user/entities/user.entity';
+import { LoggerMiddleware } from './common/middleware/logger/logger.middleware';
+import { UserModule } from './modules/user/user.module';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { User } from './modules/user/entities/user.entity';
       synchronize: true, // Solo para desarrollo
     }),
     AuthModule,
+    UserModule,
   ],
   controllers: [AppController],
   providers: [AppService],

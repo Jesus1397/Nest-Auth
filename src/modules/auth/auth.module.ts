@@ -5,10 +5,10 @@ import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from '../user/entities/user.entity';
-import { JwtAuthGuard } from './guards/jwt-auth/jwt-auth.guard';
-import { JwtStrategy } from './strategies/jwt.strategy';
-import { BlockUserMiddleware } from './middleware/block-user/block-user.middleware';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { JwtAuthGuard } from 'src/common/guards/jwt-auth/jwt-auth.guard';
+import { BlockUserMiddleware } from 'src/common/middleware/block-user/block-user.middleware';
+import { JwtStrategy } from 'src/common/strategies/jwt.strategy';
 
 @Module({
   imports: [

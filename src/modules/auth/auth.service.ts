@@ -261,9 +261,9 @@ export class AuthService {
       throw new BadRequestException('❌ User not found');
     }
 
-    const { name, lastName, email, phone } = updateProfileDto;
+    const { firstName, lastName, email, phone } = updateProfileDto;
 
-    if (name) user.name = name;
+    if (firstName) user.firstName = firstName;
     if (lastName) user.lastName = lastName;
     if (email) user.email = email;
     if (phone) user.phone = phone;

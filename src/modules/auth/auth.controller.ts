@@ -15,11 +15,11 @@ import { RequestResetPasswordDto } from './dtos/request-reset-password.dto';
 import { ResetPasswordDto } from './dtos/reset-password.dto';
 import { TwoFactorDto } from './dtos/two-factor.dto';
 import { EnableTwoFactorDto } from './dtos/enable-2fa.dto';
-import { JwtAuthGuard } from './guards/jwt-auth/jwt-auth.guard';
 import { RequestWithUser } from 'src/common/interfaces/request-with-user.interface';
 import { RegisterDto } from './dtos/register.dto';
 import { LoginDto } from './dtos/login.dto';
-import { JwtNotLoggedInGuard } from './guards/jwt-not-logged-in/jwt-not-logged-in.guard';
+import { JwtAuthGuard } from 'src/common/guards/jwt-auth/jwt-auth.guard';
+import { JwtNotLoggedInGuard } from 'src/common/guards/jwt-not-logged-in/jwt-not-logged-in.guard';
 
 @Controller('auth')
 export class AuthController {
