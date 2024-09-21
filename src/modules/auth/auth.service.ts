@@ -198,10 +198,6 @@ export class AuthService {
     return { message: '🔐 Admin access granted' };
   }
 
-  async updateUserProfile() {
-    return { message: '👤 Profile updated successfully' };
-  }
-
   private async sendVerificationEmail(email: string, token: string) {
     await this.sendEmail(
       email,
