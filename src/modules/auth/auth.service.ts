@@ -73,6 +73,10 @@ export class AuthService {
         throw new UnauthorizedException('❌ User not found');
       }
 
+      if (user.isLoggedIn) {
+        throw new UnauthorizedException('⚠️ User already logged in');
+      }
+
       const passwordMatch = await bcrypt.compare(password, user.password);
       if (!passwordMatch) {
         throw new UnauthorizedException('🔑 Invalid password');
@@ -80,6 +84,9 @@ export class AuthService {
 
       const payload = { email: user.email, sub: user.id };
       const token = this.jwtService.sign(payload);
+
+      user.isLoggedIn = true;
+      await this.userRepository.save(user);
 
       return { message: '🔐 Login successful', access_token: token };
     } catch (error) {
@@ -125,7 +132,15 @@ export class AuthService {
     return { message: '✉️ Password reset email sent' };
   }
 
-  async resetPassword(token: string, newPassword: string): Promise<object> {
+  async resetPassword(
+    token: string,
+    newPassword: string,
+    repassword: string,
+  ): Promise<object> {
+    if (newPassword !== repassword) {
+      throw new BadRequestException('❌ Passwords do not match');
+    }
+
     const user = await this.userRepository.findOne({
       where: { emailVerificationToken: token },
     });
@@ -229,5 +244,18 @@ export class AuthService {
     };
 
     await transporter.sendMail(mailOptions);
+  }
+
+  async logout(userId: string): Promise<object> {
+    const user = await this.userRepository.findOne({ where: { id: userId } });
+
+    if (!user) {
+      throw new UnauthorizedException('❌ User not found');
+    }
+
+    user.isLoggedIn = false;
+    await this.userRepository.save(user);
+
+    return { message: '👋 Logged out successfully' };
   }
 }

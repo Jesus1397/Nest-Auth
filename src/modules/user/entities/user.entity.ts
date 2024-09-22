@@ -42,4 +42,7 @@ export class User {
   phoneNumber: string;
   name: string;
   phone: string;
+
+  @Column({ default: false })
+  isLoggedIn: boolean;
 }
