@@ -2,6 +2,82 @@
   <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
 </p>
 
+[![Nest Logo](https://nestjs.com/img/logo-small.svg)](http://nestjs.com/)
+
+Proyecto NestJS - Backend API con MySQL
+=======================================
+
+Descripción
+-----------
+
+Este es un proyecto backend desarrollado con NestJS que proporciona un sistema de autenticación con funcionalidades como registro de usuarios, verificación de email, autenticación de doble factor (2FA) y restablecimiento de contraseñas, entre otras.
+
+Requisitos
+----------
+
+*   Node.js (v16 o superior)
+*   MySQL (v5.7 o superior)
+*   Nest CLI instalado globalmente (`npm install -g @nestjs/cli`)
+
+Instalación
+-----------
+
+### 1\. Clonar el repositorio
+
+    git clone https://github.com/usuario/repo-proyecto.git
+    cd repo-proyecto
+    
+
+### 2\. Instalar dependencias
+
+    npm install
+
+### 3\. Configuración de base de datos MySQL
+
+Debes crear una base de datos en MySQL antes de ejecutar el proyecto.
+
+    CREATE DATABASE nombre_de_tu_base_de_datos;
+    
+
+### 4\. Configurar variables de entorno
+
+Renombra el archivo `.env.example` a `.env` y proporciona los valores correctos para tu entorno de desarrollo.
+
+    mv .env.example .env
+    
+
+Dentro del archivo `.env`, deberás configurar las siguientes variables:
+
+    DB_HOST=localhost
+    DB_PORT=3306
+    DB_USERNAME=tu_usuario
+    DB_PASSWORD=tu_contraseña
+    DB_NAME=nombre_de_tu_base_de_datos
+    JWT_SECRET=secreto_jwt
+    JWT_EXPIRATION=3600s
+    EMAIL_USER=correo_de_prueba@example.com
+    EMAIL_PASSWORD=contraseña_del_correo
+    FRONTEND_URL=http://localhost:3000
+    DEFAULT_ADMIN_EMAIL=admin@example.com
+    DEFAULT_ADMIN_PASSWORD=admin_password
+    
+
+### 5\. Ejecutar migraciones (opcional)
+
+Si utilizas migraciones en tu proyecto, puedes ejecutarlas con el siguiente comando:
+
+    npm run typeorm:migration:run
+    
+
+### 6\. Iniciar el servidor de desarrollo
+
+    npm run start:dev
+    
+
+Por defecto, el servidor se iniciará en el puerto `3000`. Puedes acceder a la API en `http://localhost:3000`.
+
+* * *
+
 ## Flujo de Uso - API NestJS
 
 ### 1\. Registro de Usuario
