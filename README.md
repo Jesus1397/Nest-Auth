@@ -2,8 +2,6 @@
   <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
 </p>
 
-[![Nest Logo](https://nestjs.com/img/logo-small.svg)](http://nestjs.com/)
-
 Proyecto NestJS - Backend API con MySQL
 =======================================
 
@@ -24,8 +22,8 @@ Instalación
 
 ### 1\. Clonar el repositorio
 
-    git clone https://github.com/usuario/repo-proyecto.git
-    cd repo-proyecto
+    git clone https://github.com/Jesus1397/Nest-Auth.git
+    cd Nest-Auth
     
 
 ### 2\. Instalar dependencias
@@ -41,11 +39,10 @@ Debes crear una base de datos en MySQL antes de ejecutar el proyecto.
 
 ### 4\. Configurar variables de entorno
 
-Renombra el archivo `.env.example` a `.env` y proporciona los valores correctos para tu entorno de desarrollo.
+Crea un archivo `.env` en la raíz del proyecto y proporciona los valores correctos para tu entorno de desarrollo:
 
-    mv .env.example .env
+    touch .env
     
-
 Dentro del archivo `.env`, deberás configurar las siguientes variables:
 
     DB_HOST=localhost
@@ -78,7 +75,7 @@ Por defecto, el servidor se iniciará en el puerto `3000`. Puedes acceder a la A
 
 * * *
 
-## Flujo de Uso - API NestJS
+## Flujo de Uso
 
 ### 1\. Registro de Usuario
 
